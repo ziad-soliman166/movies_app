@@ -1,260 +1,227 @@
-import 'dart:async';
-
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
-import 'package:movies_app/presentation/home_screen/widgets/tabs/home_tab/widgets/movieDetailsPage.dart';
+import 'package:movies_app/presentation/home_screen/widgets/tabs/home_tab/widgets/movieDetails_screen.dart';
 
 import '../../../../../api/api_manager/api_manager.dart';
+import '../../../../../api/sources/popular/popular_Results.dart';
+import '../../../../../api/sources/topRated/topRated_Results.dart';
+import '../../../../../api/sources/upcoming/upComing_Results.dart';
 
-class HomeTab extends StatelessWidget {
+class HomeTab extends StatefulWidget {
+  @override
+  _HomeTabState createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<HomeTab> {
+  ApiManager apiManager = ApiManager();
+  List<popularResults>? popularMovies;
+  List<upComingResults>? upcomingMovies;
+  List<topRatedResults>? topRatedMovies;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchData();
+  }
+
+  void fetchData() async {
+    final popular = await apiManager.fetchPopularMovies();
+    final upcoming = await apiManager.fetchUpcomingMovies();
+    final topRated = await apiManager.fetchTopRatedMovies();
+
+    setState(() {
+      popularMovies = popular?.results;
+      upcomingMovies = upcoming?.results;
+      topRatedMovies = topRated?.results;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Popular Movies Container
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              'Popular Movies',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SizedBox.expand(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Popular Movies Section
+              Container(
+                height: MediaQuery.of(context).size.height * 0.4,
+                child: popularMovies != null
+                    ? CarouselSlider.builder(
+                        itemCount: popularMovies!.length,
+                        itemBuilder: (context, index, realIndex) {
+                          final movie = popularMovies![index];
+                          return InkWell(
+                            onTap: () {
+                              // Navigate to the MovieDetailsScreen with the movie ID
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MovieDetailsScreen(
+                                    movieId:
+                                        movie.id as int, // Casting id to int
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Stack(
+                              children: [
+                                Image.network(
+                                  'https://image.tmdb.org/t/p/w500${movie.backdropPath}',
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                ),
+                                Positioned(
+                                  bottom: MediaQuery.of(context).size.height *
+                                      0.1, // Adjust to center vertically
+                                  left: MediaQuery.of(context).size.width *
+                                      0.41, // Adjust to center horizontally
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      // Navigate to the movie details or perform an action
+                                      print("Play ${movie.title}");
+                                    },
+                                    child: Icon(
+                                      Icons.play_arrow,
+                                      size: 30,
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      shape: CircleBorder(),
+                                      padding: EdgeInsets.all(15),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        options: CarouselOptions(
+                          autoPlay: true,
+                          enlargeCenterPage: true,
+                          viewportFraction: 1.0,
+                        ),
+                      )
+                    : Center(child: CircularProgressIndicator()),
+              ),
+
+              // Upcoming Movies Section
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  "Upcoming Movies",
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+              ),
+              Container(
+                height: 150,
+                child: upcomingMovies != null
+                    ? ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: upcomingMovies!.length,
+                        itemBuilder: (context, index) {
+                          final movie = upcomingMovies![index];
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: InkWell(
+                              onTap: () {
+                                // Navigate to the MovieDetailsScreen with the movie ID
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => MovieDetailsScreen(
+                                      movieId:
+                                          movie.id as int, // Casting id to int
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  children: [
+                                    Image.network(
+                                      'https://image.tmdb.org/t/p/w200${movie.posterPath}',
+                                      width: 100,
+                                    ),
+                                    SizedBox(height: 5),
+                                    Text(
+                                      movie.title ?? "No Title",
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    : Center(child: CircularProgressIndicator()),
+              ),
+
+              // Top Rated Movies Section
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  "Top Rated Movies",
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+              ),
+              Container(
+                height: 150,
+                child: topRatedMovies != null
+                    ? ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: topRatedMovies!.length,
+                        itemBuilder: (context, index) {
+                          final movie = topRatedMovies![index];
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: InkWell(
+                              onTap: () {
+                                // Navigate to the MovieDetailsScreen with the movie ID
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => MovieDetailsScreen(
+                                      movieId:
+                                          movie.id as int, // Casting id to int
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Image.network(
+                                      'https://image.tmdb.org/t/p/w200${movie.posterPath}',
+                                      width: 100,
+                                    ),
+                                    SizedBox(height: 5),
+                                    Text(
+                                      movie.title ?? "No Title",
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    : Center(child: CircularProgressIndicator()),
+              ),
+            ],
           ),
-          PopularMoviesContainer(),
-
-          SizedBox(height: 20),
-
-          // Upcoming Movies Container
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              'Upcoming Movies',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-          ),
-          UpcomingMoviesContainer(),
-
-          SizedBox(height: 20),
-
-          // Top Rated Movies Container
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              'Top Rated Movies',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-          ),
-          TopRatedMoviesContainer(),
-        ],
+        ),
       ),
-    );
-  }
-}
-
-class PopularMoviesContainer extends StatefulWidget {
-  @override
-  _PopularMoviesContainerState createState() => _PopularMoviesContainerState();
-}
-
-class _PopularMoviesContainerState extends State<PopularMoviesContainer> {
-  final ApiManager apiManager = ApiManager();
-  List<dynamic> popularMovies = [];
-  int currentIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    fetchPopularMovies();
-  }
-
-  void fetchPopularMovies() async {
-    final results = await apiManager.getPopularMovies();
-    setState(() {
-      popularMovies = results;
-    });
-
-    Timer.periodic(Duration(seconds: 5), (timer) {
-      if (popularMovies.isNotEmpty) {
-        setState(() {
-          currentIndex = (currentIndex + 1) % popularMovies.length;
-        });
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 250, // Adjust height as per your needs
-      child: popularMovies.isEmpty
-          ? Center(child: CircularProgressIndicator())
-          : PageView.builder(
-              itemCount: popularMovies.length,
-              controller: PageController(initialPage: currentIndex),
-              onPageChanged: (index) {
-                setState(() {
-                  currentIndex = index;
-                });
-              },
-              itemBuilder: (context, index) {
-                var movie = popularMovies[index];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            MovieDetailsPage(movieId: movie['id']),
-                      ),
-                    );
-                  },
-                  child: Image.network(
-                    'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
-                    fit: BoxFit.cover,
-                  ),
-                );
-              },
-            ),
-    );
-  }
-}
-
-class UpcomingMoviesContainer extends StatefulWidget {
-  @override
-  _UpcomingMoviesContainerState createState() =>
-      _UpcomingMoviesContainerState();
-}
-
-class _UpcomingMoviesContainerState extends State<UpcomingMoviesContainer> {
-  final ApiManager apiManager = ApiManager();
-  List<dynamic> upcomingMovies = [];
-
-  @override
-  void initState() {
-    super.initState();
-    fetchUpcomingMovies();
-  }
-
-  void fetchUpcomingMovies() async {
-    final results = await apiManager.getUpcomingMovies();
-    setState(() {
-      upcomingMovies = results;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 200, // Adjust height as per your needs
-      child: upcomingMovies.isEmpty
-          ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: upcomingMovies.length,
-              itemBuilder: (context, index) {
-                var movie = upcomingMovies[index];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            MovieDetailsPage(movieId: movie['id']),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    width: 120,
-                    margin: EdgeInsets.all(8),
-                    child: Column(
-                      children: [
-                        Image.network(
-                          'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
-                          width: 120,
-                          height: 180,
-                          fit: BoxFit.cover,
-                        ),
-                        Text(
-                          movie['title'],
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-    );
-  }
-}
-
-class TopRatedMoviesContainer extends StatefulWidget {
-  @override
-  _TopRatedMoviesContainerState createState() =>
-      _TopRatedMoviesContainerState();
-}
-
-class _TopRatedMoviesContainerState extends State<TopRatedMoviesContainer> {
-  final ApiManager apiManager = ApiManager();
-  List<dynamic> topRatedMovies = [];
-
-  @override
-  void initState() {
-    super.initState();
-    fetchTopRatedMovies();
-  }
-
-  void fetchTopRatedMovies() async {
-    final results = await apiManager.getTopRatedMovies();
-    setState(() {
-      topRatedMovies = results;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 200, // Adjust height as per your needs
-      child: topRatedMovies.isEmpty
-          ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: topRatedMovies.length,
-              itemBuilder: (context, index) {
-                var movie = topRatedMovies[index];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            MovieDetailsPage(movieId: movie['id']),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    width: 120,
-                    margin: EdgeInsets.all(8),
-                    child: Column(
-                      children: [
-                        Image.network(
-                          'https://image.tmdb.org/t/p/w500${movie['poster_path']}',
-                          width: 120,
-                          height: 180,
-                          fit: BoxFit.cover,
-                        ),
-                        Text(
-                          movie['title'],
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
     );
   }
 }
