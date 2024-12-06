@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../presentation/home_screen/widgets/tabs/home_tab/widgets/related_movie.dart';
+import '../sources/movie_Discover/MovieDiscover_Results.dart';
 import '../sources/popular/Popular_source.dart';
 import '../sources/topRated/TopRated_source.dart';
 import '../sources/upcoming/Upcoming_source.dart';
@@ -106,6 +107,25 @@ class ApiManager {
       }
     } catch (e) {
       print("Error fetching video details: $e");
+    }
+    return null;
+  }
+
+  // Add this method to ApiManager class
+  Future<List<MovieDiscoverResults>?> fetchMoviesBySearch(String query) async {
+    final url = Uri.parse('$baseUrl/search/movie?api_key=$apiKey&query=$query');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['results'] != null) {
+          return (data['results'] as List)
+              .map((movie) => MovieDiscoverResults.fromJson(movie))
+              .toList();
+        }
+      }
+    } catch (e) {
+      print("Error fetching search results: $e");
     }
     return null;
   }
